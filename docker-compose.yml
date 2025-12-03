@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n_practica
+    ports:
+      - "5678:5678"
+    volumes:
+      - .n8n:/home/node/.n8n
+    env_file:
+      - .env
+    networks:
+      - task-network
+
+networks:
+  task-network:
+    name: task-manager-service_default
+    external: true
