@@ -1,0 +1,259 @@
+{
+  "name": "Practica 8_Dificultad_Media",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "task_create",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -416,
+        96
+      ],
+      "id": "ddf36c0a-7c5d-42d6-a73f-9eda9268c4ea",
+      "name": "Webhook",
+      "webhookId": "67981ecc-fae1-4ea5-bf19-efe6726c809f"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "211e8a76-dc12-4c7f-b021-a225936ed45e",
+              "leftValue": "={{$json.body.title}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -208,
+        96
+      ],
+      "id": "fb83b8b2-98fc-4cdc-b230-a9014cab54ca",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "errorMessage": "Bad Request: title is required"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "10179b94-99b2-4e85-9722-8f99db7de2e8",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "queue": "task_created",
+        "sendInputData": false,
+        "message": "={\n  \"id\": {{$node[\"CreateTask\"].json.id}},\n  \"title\": \"{{$node[\"CreateTask\"].json.title}}\",\n  \"description\": \"{{$node[\"CreateTask\"].json.description}}\",\n  \"done\": {{$node[\"CreateTask\"].json.done}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rabbitmq",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "c160ffed-1ec6-472f-8c7e-2c246e561454",
+      "name": "RabbitMQ",
+      "credentials": {
+        "rabbitmq": {
+          "id": "puNfGUSFaXWUj0kG",
+          "name": "RabbitMQ account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"task\": {\n    \"id\": {{$node[\"CreateTask\"].json.id}},\n    \"title\": \"{{$node[\"CreateTask\"].json.title}}\",\n    \"description\": \"{{$node[\"CreateTask\"].json.description}}\",\n    \"done\": {{$node[\"CreateTask\"].json.done}}\n  }\n}\n",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "9841454a-e5cb-446c-867a-dc603aa6a468",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "task",
+          "mode": "list",
+          "cachedResultName": "task"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "done": false,
+            "title": "={{$json.body.title}}",
+            "description": "={{$json.body.description || ''}}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "done",
+              "displayName": "done",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "outputColumns": [
+            "*"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f6e70f9b-0093-4c73-bcaa-35daacdb1a89",
+      "name": "CreateTask",
+      "credentials": {
+        "postgres": {
+          "id": "ZO8H9OrXvr9j1QlP",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "CreateTask",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RabbitMQ": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CreateTask": {
+      "main": [
+        [
+          {
+            "node": "RabbitMQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b891ba55-a45f-42b7-88c9-b63ef79726fc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f99726cd3e16cded85e5edc7297187d905102d6096c636e9a4f62ec8e8e458b5"
+  },
+  "id": "7HMgx8OlYiidZecA",
+  "tags": []
+}
